@@ -8,3 +8,8 @@ report.txt
 *.log
 LOGGING_GUIDE.md
 summary.py
+download_links_fixed.py
+download_links_optimized.py
+alternate/
+docs/
+level3/
