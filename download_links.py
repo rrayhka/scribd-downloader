@@ -7,7 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 # 1. Persiapan Data
-df = pd.read_csv('sample_bersih.csv', sep=',')
+df = pd.read_csv('sample.csv', sep=',')
 urls = df['URL'].drop_duplicates().tolist()
 
 # 2. Automasi Browser
