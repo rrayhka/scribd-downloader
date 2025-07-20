@@ -94,6 +94,57 @@ def find_brave_path():
     
     return None
 
+def wait_for_download_button(driver, min_wait=10, max_wait=20, poll_interval=3):
+    """
+    Smart polling untuk menunggu tombol download tersedia
+    
+    Args:
+        driver: Selenium WebDriver instance
+        min_wait: Waktu tunggu minimum dalam detik
+        max_wait: Waktu tunggu maksimum dalam detik  
+        poll_interval: Interval polling dalam detik
+        
+    Returns:
+        tuple: (success, download_button, elapsed_time)
+    """
+    logger.info(f"⏳ Smart waiting: min={min_wait}s, max={max_wait}s, interval={poll_interval}s")
+    
+    # Tunggu minimum (file perlu waktu untuk diproses)
+    logger.info(f"🕐 Menunggu waktu minimum: {min_wait} detik...")
+    time.sleep(min_wait)
+    
+    # Mulai polling
+    elapsed_time = min_wait
+    logger.info(f"🔄 Memulai polling untuk tombol download...")
+    
+    while elapsed_time < max_wait:
+        try:
+            # Coba temukan tombol download
+            download_btn = driver.find_element(By.CSS_SELECTOR, 'a.btn.btn-lg.btn-success')
+            
+            # Validasi tombol tersedia dan clickable
+            if download_btn and download_btn.is_enabled() and download_btn.is_displayed():
+                href = download_btn.get_attribute('href')
+                if href and href.strip():  # Pastikan href tidak kosong
+                    logger.info(f"✅ Tombol download valid ditemukan setelah {elapsed_time} detik")
+                    return True, download_btn, elapsed_time
+                    
+        except Exception as e:
+            # Tombol belum tersedia atau error lain
+            logger.debug(f"Polling attempt failed: {e}")
+        
+        # Progress indicator
+        remaining = max_wait - elapsed_time
+        logger.info(f"⏳ Polling... {elapsed_time}s elapsed, {remaining}s remaining")
+        
+        # Tunggu sebelum polling berikutnya
+        time.sleep(poll_interval)
+        elapsed_time += poll_interval
+    
+    # Timeout reached
+    logger.warning(f"⏰ Timeout: Tombol download tidak ditemukan setelah {max_wait} detik")
+    return False, None, elapsed_time
+
 def main():
     # 1. Persiapan Data
     logger.info("📋 Memulai Scribd Downloader...")
@@ -194,26 +245,43 @@ def main():
             wait.until(EC.url_contains("https://compress-pdf.vietdreamhouse.com/"))
             logger.info("✅ Berhasil redirect ke halaman download")
 
-            # Tunggu file disiapkan (±10 detik)
-            logger.info("⏳ Menunggu file disiapkan (10 detik)...")
-            time.sleep(10)
-
-            # Cari tombol download dan klik
-            logger.info("🔍 Mencari tombol download...")
-            download_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'a.btn.btn-lg.btn-success')))
-            download_link = download_btn.get_attribute('href')
+            # Smart waiting dengan polling dinamis untuk tombol download
+            success, download_btn, elapsed_time = wait_for_download_button(
+                driver, 
+                min_wait=10,    # 10 detik minimum
+                max_wait=30,   # 30 detik maksimum
+                poll_interval=5 # cek setiap 5 detik
+            )
             
-            if download_link:
+            if not success:
+                error_msg = f"❌ Timeout: Tombol download tidak tersedia setelah {elapsed_time} detik"
+                logger.error(error_msg)
+                failed_downloads += 1
+                download_errors.append({"url": url, "error": f"Download button timeout after {elapsed_time}s"})
+                continue
+
+            # Dapatkan download link dari tombol yang sudah ditemukan
+            logger.info("🔗 Mengekstrak download link...")
+            if download_btn is not None:
+                download_link = download_btn.get_attribute('href')
+            else:
+                download_link = None
+            
+            if download_link and download_link.strip():
                 logger.info(f"🔗 Download link ditemukan: {download_link}")
                 logger.info("📥 Memulai download...")
                 driver.get(download_link)  # Ini akan memicu unduhan
                 logger.info("✅ Download berhasil dimulai")
                 successful_downloads += 1
+                
+                # Tunggu sebentar untuk memastikan download dimulai
+                time.sleep(3)
+                
             else:
-                error_msg = f"❌ Tidak dapat menemukan download link untuk URL: {url}"
+                error_msg = f"❌ Download link kosong/tidak valid untuk URL: {url}"
                 logger.error(error_msg)
                 failed_downloads += 1
-                download_errors.append({"url": url, "error": "Download link not found"})
+                download_errors.append({"url": url, "error": "Download link empty or invalid"})
                 continue
 
             # Tunggu beberapa detik sebelum lanjut
