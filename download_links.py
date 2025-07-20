@@ -43,6 +43,22 @@ print(f"✅ Brave ditemukan di: {brave_path}")
 
 options = Options()
 options.binary_location = brave_path
+
+# SOLUSI UTAMA: Konfigurasi download otomatis
+download_dir = os.path.join(os.getcwd(), "downloads")
+os.makedirs(download_dir, exist_ok=True)
+
+prefs = {
+    "download.default_directory": download_dir,
+    "download.prompt_for_download": False,  # Disable "Save As" dialog
+    "download.directory_upgrade": True,
+    "safebrowsing.enabled": True,
+    "safebrowsing.disable_download_protection": True,
+    "plugins.always_open_pdf_externally": True,  # Download PDF instead of opening
+}
+options.add_experimental_option("prefs", prefs)
+
+# Anti-detection options
 options.add_argument('--no-first-run')
 options.add_argument('--no-service-autorun') 
 options.add_argument('--password-store=basic')
@@ -57,7 +73,8 @@ try:
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
     wait = WebDriverWait(driver, 20)
     print("✅ Brave browser berhasil diinisialisasi")
-    print(f"🔍 Memproses {len(urls)} URL...")
+    print(f"� Download directory: {download_dir}")
+    print(f"�🔍 Memproses {len(urls)} URL...")
     
 except Exception as e:
     print(f"❌ Gagal menginisialisasi Brave browser: {e}")
