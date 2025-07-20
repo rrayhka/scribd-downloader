@@ -3,24 +3,8 @@ import pandas as pd
 import os
 import logging
 from datetime import datetime
-from selenium import webdritry:
-    # Inisialisasi driver dengan Brave
-    logger.info("🚀 Menginisialisasi Brave browser...")
-    driver = webdriver.Chrome(options=options)
-    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-    wait = WebDriverWait(driver, 20)
-    logger.info("✅ Brave browser berhasil diinisialisasi")
-    logger.info(f"📁 Download directory: {download_dir}")
-    logger.info(f"🔍 Memproses {len(urls)} URL...")
-    
-except Exception as e:
-    logger.error(f"❌ Gagal menginisialisasi Brave browser: {e}")
-    exit(1)
-
-# Initialize counters for summary
-successful_downloads = 0
-failed_downloads = 0
-download_errors = []enium.webdriver.chrome.service import Service
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -47,6 +31,19 @@ def setup_logging():
     
     # File handler
     file_handler = logging.FileHandler(log_filename, encoding='utf-8')
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(formatter)
+    
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(formatter)
+    
+    # Add handlers to logger
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+    
+    return logger, log_filename
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
     
@@ -115,7 +112,7 @@ logger.info("📋 Memulai Scribd Downloader...")
 logger.info(f"📂 Log file: {log_file}")
 
 try:
-    df = pd.read_csv('output.csv', sep=',')
+    df = pd.read_csv('redownload.csv', sep=',')
     urls = df['URL'].drop_duplicates().tolist()
     logger.info(f"📄 Berhasil membaca {len(df)} baris dari output.csv")
     logger.info(f"🔗 Ditemukan {len(urls)} URL unik untuk diproses")
@@ -205,7 +202,7 @@ for i, url in enumerate(urls, 1):
 
         # Tunggu file disiapkan (±10 detik)
         logger.info("⏳ Menunggu file disiapkan (10 detik)...")
-        time.sleep(10)
+        time.sleep(17)
 
         # Cari tombol download dan klik
         logger.info("🔍 Mencari tombol download...")

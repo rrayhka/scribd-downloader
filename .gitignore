@@ -2,3 +2,9 @@
 BRAVE_MIGRATION_GUIDE.md
 download_links_brave_undetected.py
 CRITICAL_ANALYSIS.md
+/downloads/
+download_summary_*.txt
+report.txt
+*.log
+LOGGING_GUIDE.md
+summary.py
